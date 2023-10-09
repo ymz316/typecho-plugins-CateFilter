@@ -3,9 +3,9 @@
  * 首页过滤指定分类
  * 
  * @package CateFilter
- * @author Rakiy
- * @version 1.2.2
- * @link http://ysido.com/
+ * @author Rakiy,WoodChen
+ * @version 1.2.4
+ * @link http://woodchen.ink
  */
 class CateFilter_Plugin implements Typecho_Plugin_Interface
 {

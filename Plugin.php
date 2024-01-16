@@ -3,8 +3,8 @@
  * 首页过滤指定分类
  * 
  * @package CateFilter
- * @author Rakiy,WoodChen
- * @version 1.2.4
+ * @author Rakiy,WoodChen,ymz316
+ * @version 1.2.5
  * @link http://woodchen.ink
  */
 class CateFilter_Plugin implements Typecho_Plugin_Interface
@@ -40,8 +40,15 @@ class CateFilter_Plugin implements Typecho_Plugin_Interface
      * @return void
      */
     public static function config(Typecho_Widget_Helper_Form $form){
-        $CateId = new Typecho_Widget_Helper_Form_Element_Text('CateId', NULL, '0', _t('首页不显示的分类'), _t('多个请用英文逗号隔开'));
-        $form->addInput($CateId);
+
+        // $CateId = new Typecho_Widget_Helper_Form_Element_Text('CateId', NULL, '0', _t('首页不显示的分类'), _t('多个请用英文逗号隔开'));
+        // $form->addInput($CateId);
+
+        Typecho_Widget::widget('Widget_Metas_Category_List')->to($categories);
+        while($categories->next()){$cate[$categories->mid]=$categories->name;}//获取分类列表
+        
+        $CateId = new Typecho_Widget_Helper_Form_Element_Checkbox('CateId', $cate,[], _t('勾选首页不想显示的分类'), NULL);
+        $form->addInput($CateId->multiMode());
     }
 
     /**
@@ -68,15 +75,15 @@ class CateFilter_Plugin implements Typecho_Plugin_Interface
      * @return void
      */
     public static function filter($obj, $select){
-        if('/feed' == strtolower(Typecho_Request::getInstance()->getPathinfo()) || '/feed/' == strtolower(Typecho_Request::getInstance()->getPathinfo())) return $select;
+        // if('/feed' == strtolower(Typecho_Request::getInstance()->getPathinfo()) || '/feed/' == strtolower(Typecho_Request::getInstance()->getPathinfo())) return $select;
 
         $CateIds = Typecho_Widget::widget('Widget_Options')->plugin('CateFilter')->CateId;
         if(!$CateIds) return $select;       //没有写入值，则直接返回
-        $select = $select->select('table.contents.cid', 'table.contents.title', 'table.contents.slug', 'table.contents.created', 'table.contents.authorId','table.contents.modified', 'table.contents.type', 'table.contents.status', 'table.contents.text', 'table.contents.commentsNum', 'table.contents.order','table.contents.template', 'table.contents.password', 'table.contents.allowComment', 'table.contents.allowPing', 'table.contents.allowFeed','table.contents.parent')->join('table.relationships','table.relationships.cid = table.contents.cid','right')->join('table.metas','table.relationships.mid = table.metas.mid','right')->where('table.metas.type=?','category');
-        $CateIds = explode(',', $CateIds);
-        $CateIds = array_unique($CateIds);  //去除重复值
+        $select = $select->join('table.relationships','table.relationships.cid = table.contents.cid','right')->group('table.contents.cid');
+        // $CateIds = explode(',', $CateIds);
+        // $CateIds = array_unique($CateIds);  //去除重复值
         foreach ($CateIds as $k => $v) {
-            $select = $select->where('table.relationships.mid != '.intval($v))->group('cid');//确保每个值都是数字；排除重复文章
+            $select = $select->where('table.relationships.mid != '.intval($v));//确保每个值都是数字；排除重复文章
         } 
         return $select;
     }   
